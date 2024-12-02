@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 import { Trash2 } from "lucide-react";
+import Image from "next/image";
 
 // Define types for the image data
 interface ImageData {
@@ -62,7 +63,7 @@ export default function PhotoGallery(): JSX.Element {
     try {
       setUploading(true);
 
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('photos')
         .upload(`${Date.now()}-${selectedFile.name}`, selectedFile, {
           cacheControl: '3600',
@@ -137,11 +138,18 @@ export default function PhotoGallery(): JSX.Element {
         {images.map((image) => (
           <div key={image.id} className="break-inside-avoid mb-4">
             <Card className="overflow-hidden">
-              <img
-                src={`${supabaseUrl}${image.url}`}
-                alt={image.file_name}
-                className="w-full h-auto object-cover"
-              />
+              <div className="relative w-full aspect-square">
+                <Image
+                  src={`${supabaseUrl}${image.url}`}
+                  alt={image.file_name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 100vw, 
+                         (max-width: 768px) 50vw,
+                         (max-width: 1024px) 33vw,
+                         25vw"
+                />
+              </div>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
