@@ -26,6 +26,12 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 // Initialize Supabase client
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Helper function to get public URL for images
+const getPublicImageUrl = (storage_path: string): string => {
+  const { data } = supabase.storage.from('photos').getPublicUrl(storage_path);
+  return data.publicUrl;
+};
+
 export default function PhotoGallery(): JSX.Element {
   const [images, setImages] = useState<ImageData[]>([]);
   const [uploading, setUploading] = useState<boolean>(false);
@@ -63,9 +69,11 @@ export default function PhotoGallery(): JSX.Element {
     try {
       setUploading(true);
 
+      const filePath = `${Date.now()}-${selectedFile.name}`;
+      
       const { error } = await supabase.storage
         .from('photos')
-        .upload(`${Date.now()}-${selectedFile.name}`, selectedFile, {
+        .upload(filePath, selectedFile, {
           cacheControl: '3600',
           upsert: false,
           contentType: selectedFile.type,
@@ -140,7 +148,7 @@ export default function PhotoGallery(): JSX.Element {
             <Card className="overflow-hidden">
               <div className="relative w-full aspect-square">
                 <Image
-                  src={`${supabaseUrl}${image.url}`}
+                  src={getPublicImageUrl(image.storage_path)}
                   alt={image.file_name}
                   fill
                   className="object-cover"
