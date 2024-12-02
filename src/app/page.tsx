@@ -8,23 +8,34 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 import { Trash2 } from "lucide-react";
 
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+// Define types for the image data
+interface ImageData {
+  id: number;
+  created_at: string;
+  file_name: string;
+  file_size: number;
+  url: string;
+  storage_path: string;
+}
 
-export default function PhotoGallery() {
-  const [images, setImages] = useState([]);
-  const [uploading, setUploading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
+// Type assertion for environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+
+// Initialize Supabase client
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export default function PhotoGallery(): JSX.Element {
+  const [images, setImages] = useState<ImageData[]>([]);
+  const [uploading, setUploading] = useState<boolean>(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Fetch images on component mount
   useEffect(() => {
     fetchImages();
   }, []);
 
-  const fetchImages = async () => {
+  const fetchImages = async (): Promise<void> => {
     const { data, error } = await supabase
       .from("images")
       .select("*")
@@ -38,14 +49,14 @@ export default function PhotoGallery() {
     setImages(data || []);
   };
 
-  const handleFileSelect = (event) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>): void => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
     }
   };
 
-  const handleUpload = async () => {
+  const handleUpload = async (): Promise<void> => {
     if (!selectedFile) return;
 
     try {
@@ -67,9 +78,9 @@ export default function PhotoGallery() {
       if (error) throw error;
 
       await fetchImages();
-      setSelectedFile(null); // Reset selected file
+      setSelectedFile(null);
       // Reset file input
-      const fileInput = document.querySelector('input[type="file"]');
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -78,7 +89,7 @@ export default function PhotoGallery() {
     }
   };
 
-  const handleDelete = async (id, path) => {
+  const handleDelete = async (id: number, path: string): Promise<void> => {
     try {
       const { error: storageError } = await supabase.storage
         .from("photos")
@@ -127,7 +138,7 @@ export default function PhotoGallery() {
           <div key={image.id} className="break-inside-avoid mb-4">
             <Card className="overflow-hidden">
               <img
-                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${image.url}`}
+                src={`${supabaseUrl}${image.url}`}
                 alt={image.file_name}
                 className="w-full h-auto object-cover"
               />
@@ -159,4 +170,4 @@ export default function PhotoGallery() {
       </div>
     </div>
   );
-};
+}
